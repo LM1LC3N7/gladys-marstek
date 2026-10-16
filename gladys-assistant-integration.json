@@ -1,177 +1,87 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "Marstek",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Marstek Venus batteries over their local Open API: charge, powers, energy and mode.",
+    "fr": "Batteries Marstek Venus via leur Open API locale : charge, puissances, énergie et mode."
   },
-  "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
-  "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "version": "0.1.0",
+  "docker_image": "ghcr.io/lm1lc3n7/gladys-marstek:0.1.0",
+  "gladys_version": ">=5.0.0",
+  "cover_image": "https://raw.githubusercontent.com/LM1LC3N7/gladys-marstek/main/cover.png",
+  "categories": ["energy"],
+  "transports": ["local"],
+  "network_discovery": [{ "type": "udp-active-broadcast", "ports": [30000] }],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "Your Marstek batteries in Gladys",
+        "fr": "Vos batteries Marstek dans Gladys"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "Reads your Marstek home batteries (Venus E, C, D, A) on your local network through their Open API: state of charge, charge and discharge power, solar, on-grid and off-grid power, the CT meter, energy counters for the Gladys energy views, battery temperature, and the operating mode, which Gladys can change. In the Marstek app, turn on the Open API of each battery (UDP port 30000), then open Discovery, or type the IP addresses below. Nothing goes through the Internet nor the Marstek cloud. Unofficial, not affiliated with Marstek.",
+        "fr": "Lit vos batteries domestiques Marstek (Venus E, C, D, A) sur votre réseau local via leur Open API : niveau de charge, puissances de charge et de décharge, solaire, puissances réseau et hors réseau, compteur CT, compteurs d'énergie pour les vues énergie de Gladys, température de la batterie, et le mode de fonctionnement, que Gladys peut changer. Dans l'application Marstek, activez l'Open API de chaque batterie (port UDP 30000), puis ouvrez Découverte, ou saisissez les adresses IP ci-dessous. Rien ne passe par Internet ni par le cloud Marstek. Non officiel, sans lien avec Marstek."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://github.com/LM1LC3N7/gladys-marstek/blob/main/docs/fr.md",
+          "label": { "en": "Guide (French)", "fr": "Guide (français)" }
+        },
+        {
+          "url": "https://github.com/LM1LC3N7/gladys-marstek/blob/main/docs/en.md",
+          "label": { "en": "Guide (English)", "fr": "Guide (anglais)" }
+        },
+        {
+          "url": "https://eu.hamedata.com/ems/resource/agreement/MarstekDeviceOpenApi.pdf",
+          "label": {
+            "en": "Marstek Device Open API (Marstek)",
+            "fr": "Marstek Device Open API (Marstek)"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
+      "key": "addresses",
+      "type": "string",
+      "label": {
+        "en": "Battery IP addresses (optional)",
+        "fr": "Adresses IP des batteries (facultatif)"
       },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
-    },
-    {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
       "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
+        "en": "Discovery finds the batteries that answer its broadcast. Type the others here, separated by commas, with :port when the Open API does not use 30000. Give them a fixed address in your router.",
+        "fr": "Découverte trouve les batteries qui répondent à sa diffusion. Saisissez les autres ici, séparées par des virgules, avec :port quand l'Open API n'utilise pas 30000. Donnez-leur une adresse fixe dans votre box."
       },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
+      "placeholder": {
+        "en": "192.168.1.40, 192.168.1.41:30001",
+        "fr": "192.168.1.40, 192.168.1.41:30001"
+      },
+      "required": false
     },
     {
-      "key": "unit",
-      "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
-      "required": false,
-      "default": "celsius",
-      "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
-      ]
-    },
-    {
-      "key": "poll_frequency",
+      "key": "poll_interval",
       "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "label": {
+        "en": "Reading interval (s)",
+        "fr": "Intervalle de lecture (s)"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "How often each battery is read. The batteries answer one request at a time and some firmware turns its Open API off when read too often: 30 s, as the Marstek app, unless you need more.",
+        "fr": "Fréquence de lecture de chaque batterie. Les batteries répondent à une requête à la fois et certains firmwares coupent leur Open API quand ils sont trop sollicités : 30 s, comme l'application Marstek, sauf besoin."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": 30,
+      "min": 10,
+      "max": 300
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
-      "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ]
-    }
-  ],
-  "scene_triggers": [
-    {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
-      "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
-      },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
-        },
-        {
-          "key": "target",
-          "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
-          "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
-          ]
-        }
-      ],
-      "variables": [
-        {
-          "key": "target",
-          "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
-        }
-      ]
-    }
-  ],
-  "scene_actions": [
-    {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
-      },
-      "timeout_seconds": 15,
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ],
-      "outputs": [
-        {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
-        }
-      ]
-    }
-  ],
-  "widgets": [
-    {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
-      },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "key": "test_connection",
+      "label": { "en": "Test the connection", "fr": "Tester la connexion" },
+      "timeout_seconds": 90
     }
   ]
 }

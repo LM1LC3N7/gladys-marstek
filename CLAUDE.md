@@ -1,76 +1,85 @@
 # CLAUDE.md
 
-Project rules for coding assistants (Claude Code reads this file) and for human
-contributors.
+Project rules for coding assistants (Claude Code reads this file) and for
+human contributors. Read **[TODO.md](./TODO.md) first**: status, decisions
+already taken and the next milestones.
 
 ## What this is
 
-A Gladys Assistant **external integration**: a Node.js service (Node 22+, ESM,
-no build step) that runs in its own sandboxed Docker container and talks to
-Gladys through
-[`@gladysassistant/integration-sdk`](https://github.com/GladysAssistant/integration-sdk-js),
-its only runtime dependency. It started from the official JavaScript template.
+A Gladys Assistant **external integration** of type `device`: a Node.js
+service (Node 22+, ESM, no build step) in its own sandboxed Docker container,
+talking to Gladys through `@gladysassistant/integration-sdk` (v0.15), its only
+runtime dependency. It reads Marstek home batteries (Venus series) through
+their local **Open API** (JSON-RPC over UDP, port 30000), turns each battery
+into a Gladys device in the energy categories and writes the operating mode
+back. Unofficial, not affiliated with Marstek.
 
 ## Commands
 
 ```bash
 npm install
 npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+node --test test/catalog.test.js          # one file
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
+npm run audit                             # npm audit --omit=dev
 npx github:GladysAssistant/integration-store .   # store admission checks
 ```
 
-The CI (`.github/workflows/ci.yml`) runs `format:check`, `lint` and `test` on
-Node 22 and 24, and builds the Docker image: run the three commands before
-pushing.
+Run `format:check`, `lint`, `test` and `audit` before every commit.
 
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
-src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
-gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
-.github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
+index.js            SDK bootstrap only
+src/handlers.js     every SDK handler -> the app (shared with the tests)
+src/app.js          MarstekApp: batteries, polling rounds, discovery through
+                    the core, states, mode writes, transports, connection test
+src/udp.js          the only network access: one socket per Open API port,
+                    one request at a time, timeouts, retries, 2 s after answers
+src/protocol.js     JSON-RPC requests and answers, method names (pure)
+src/profile.js      device name + firmware -> capabilities and encodings (pure)
+src/battery.js      one battery: identity, last answers, schedule, guards
+src/catalog.js      answers -> feature values; the features; modes (pure)
+src/devices.js      battery -> Gladys device (pure)
+src/publisher.js    states within the Gladys rate limit
+src/config.js       config_schema normalized (addresses, interval)
+src/constants.js    manifest keys, limits, timings
+src/i18n.js         runtime texts (en/fr)
+test/fixtures/      answers shaped like the Open API document and field captures
+test/helpers/       a fake Open API client; Gladys is the SDK's fake
 ```
 
 ## Rules
 
-- **External ids are forever.** Build them with
-  `gladys.externalIds(type, platformId)`, `platformId` being the unique id the
-  platform gives the device (serial, cloud id, MAC), never a label. Gladys keys
-  devices, their history, scenes and dashboards on them: changing one creates a
-  new device and orphans the old one. The same goes for every key users store:
-  manifest `config_schema`, `actions`, widget and scene keys, feature keys.
-- **The container rootfs is read-only.** Write only under `/data`, the one
-  writable volume. Never log tokens, passwords or API keys.
-- **Versions belong to the Release workflow** (Actions → Release). Never edit
-  `version` in `package.json` or in the manifest, nor the `docker_image` tag,
-  by hand — except on the README's hand-pushed tag path, which bumps all three
-  together before tagging. `test/manifest.test.js` checks they agree.
-- **Changelog.** Every user-visible change adds a line under `## [Unreleased]`
-  in `CHANGELOG.md` (`### Added`, `Changed`, `Fixed`, `Removed`, `Security`).
-  Never write a version heading: the Release workflow moves the section, and it
-  becomes the notes of the GitHub Release.
-- **Manifest.** Texts are multi-language objects `{ "en": ..., "fr": ... }`:
-  `label`, `description` and `placeholder` alike, never a plain string. The
-  catalog `description` holds 10 to 100 characters per language. A field the
-  older cores do not know needs a higher `gladys_version` minimum
-  (`categories`: 4.86.0; `widgets`, `scene_triggers`, `scene_actions`,
-  `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
-  code (defaults, action, scene and widget handlers): change both sides
-  together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
-- **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
-  in English. Tests never touch the network.
+- **External ids are forever**: device = `gladys.externalIds('battery', <MAC>)`
+  with the Bluetooth MAC (never `wifi_mac`, the access point's), feature =
+  `<device>:<catalog key>`. Never rename a catalog key, never change how ids
+  are built.
+- Manifest keys (`test_connection`, `addresses`, `poll_interval`) and the mode
+  option values (`auto`, `ai`, `manual`, `passive`, `ups`) are frozen: users
+  and scenes store them.
+- Field names, units and signs come from the Marstek Device Open API document
+  (Rev 3.1) and the firmware findings listed in `src/profile.js` and TODO.md.
+  Never guess a field; a new firmware quirk goes into `src/profile.js` with its
+  source.
+- **Never harm a battery**: one request at a time, nothing during the 2 s after
+  an answer, no repeated datagram on fragile firmware (`profile.retries`),
+  never `Bat.GetStatus` on it, HMG-50 builds once a minute at most, an
+  `ES.SetMode` is sent once (a lost answer is read back with `ES.GetMode`).
+  Never send the SYS methods (`DOD.SET`, `Ble.Adv`, `Led.Ctrl`, `Set.Ver`) nor
+  `Reset.Factory`.
+- Category conventions: the comments of `DEVICE_FEATURE_TYPES` in the SDK and
+  the units the core accepts per category (`DEVICE_FEATURE_UNITS_BY_CATEGORY`
+  in `server/utils/constants.js`); checked by `test/catalog.test.js`.
+- Lifetime counters only go up (`Battery.guardCounter`) and a zero counter is
+  never published: an index jumping from 0 shows as a huge production.
+- Container limits: 256 MB RAM, 0.5 CPU, read-only rootfs, only `/data`
+  writable, bridge network: unicast to the batteries only, broadcast through
+  `gladys.scanNetwork` (declared in the manifest `network_discovery`).
+- Gladys rate limits: 300 states/min, 300 scene events/min.
+- Tests never touch the network, except `test/udp.test.js` on 127.0.0.1.
+- Code, comments, README in English; `docs/en.md` and `docs/fr.md` kept in sync.
+- Every user-visible change adds a line under `## [Unreleased]` in
+  `CHANGELOG.md`; versions belong to the Release workflow.

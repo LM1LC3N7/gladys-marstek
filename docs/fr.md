@@ -1,67 +1,132 @@
-# Template de démonstration
+# Marstek
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+Cette intégration amène vos **batteries domestiques Marstek** (Venus E, Venus C,
+Venus D, Venus A) dans Gladys : niveau de charge, puissances, énergie et mode de
+fonctionnement, lus en direct sur votre réseau local grâce à l'**Open API**
+officielle de Marstek (JSON en UDP). Rien ne passe par Internet ni par le cloud
+Marstek. Non officielle, sans lien avec Marstek.
+
+> **Version de développement (0.1).** Développée à partir de la documentation
+> Open API de Marstek (Rev 3.1) et des relevés publiés par la communauté, pas
+> encore testée avec une vraie batterie. Vos retours sont les bienvenus sur le
+> dépôt GitHub.
 
 ## Ce que vous obtenez
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+Chaque batterie devient un appareil Gladys de l'onglet **Découverte**, nommé
+d'après son modèle (« Marstek Venus E 3.0 »). Une valeur n'apparaît que si votre
+batterie la donne.
 
-## Configuration
+| Dans Gladys                           | D'où ça vient                                                                   |
+| ------------------------------------- | ------------------------------------------------------------------------------- |
+| Niveau de charge                      | % de la batterie                                                                |
+| Puissance de charge / de décharge     | toujours positives ; déduites du bilan des puissances quand le firmware se tait |
+| Énergie chargée / déchargée (AC)      | compteurs cumulés de la batterie côté prise, en kWh                             |
+| Puissance de sortie réseau            | ce que la batterie fournit à la maison par sa prise                             |
+| Puissance et énergie hors réseau      | la prise de secours (EPS) de la batterie                                        |
+| Puissance et énergie solaires         | Venus A et D (entrées PV), en kWh pour les vues énergie                         |
+| Puissance réseau (CT)                 | le compteur CT de la batterie : positive en soutirage, négative en injection    |
+| Phases A, B, C (CT)                   | seulement en triphasé                                                           |
+| Énergie soutirée / injectée (CT)      | firmware 150 et plus récent                                                     |
+| Température de la batterie            | toutes les 5 minutes, sur les firmwares sûrs (voir plus bas)                    |
+| **Mode de fonctionnement**            | Autoconsommation (Auto), Optimisation IA, Manuel, Passif, Secours (UPS)         |
+| **Puissance et durée du mode passif** | la consigne du mode passif : négative pour charger, positive pour décharger     |
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+Les valeurs utilisent les catégories énergie de Gladys (stockage batterie,
+sortie maison, réseau, production) : elles apparaissent dans les vues énergie
+comme celles de n'importe quelle autre marque.
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+**Ce que vous pouvez piloter** :
 
-## Actions
+- le **mode** : Autoconsommation, IA, Passif, et Secours (UPS) à partir du
+  firmware 150. Le mode **Manuel** applique le programme horaire réglé dans
+  l'application Marstek : il se choisit dans l'application ;
+- le **mode passif** : réglez d'abord la **puissance** (par exemple `-1500` pour
+  charger à 1 500 W, `800` pour fournir 800 W) et la **durée** en minutes, puis
+  choisissez le mode **Passif**. En mode passif, une nouvelle puissance
+  s'applique tout de suite. Exemple de scène : « charger à 2 000 W pendant les
+  heures creuses ».
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+## Prérequis
 
-## Scènes
+- Une batterie Marstek **Venus E 3.0, Venus A ou Venus D** (ou Venus C, Venus E
+  2.0 : voir les limites), reliée à votre réseau (Wi-Fi ou Ethernet).
+- L'**Open API activée** dans l'application Marstek pour chaque batterie, avec
+  son port UDP (30000 par défaut).
+- Une **adresse IP fixe** pour chaque batterie dans votre box (bail DHCP
+  réservé), comme le conseille Marstek.
+- Un firmware à jour : **150 ou plus récent** pour les Venus E 3.0, A et D.
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
+## Installation
 
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+1. Dans l'application Marstek, activez l'**Open API** de chaque batterie.
+2. Dans Gladys, ouvrez l'onglet **Découverte** de l'intégration : Gladys diffuse
+   une demande sur le réseau et liste les batteries qui répondent.
+3. Une batterie n'apparaît pas ? Saisissez son **adresse IP** dans la
+   configuration (plusieurs adresses séparées par des virgules, avec `:port` si
+   l'Open API n'utilise pas 30000), puis ouvrez à nouveau Découverte.
+4. Ajoutez les batteries voulues.
 
-## Tableau de bord
+Le bouton **Tester la connexion** liste les batteries qui répondent, avec leur
+firmware et la force du Wi-Fi.
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+## Options
+
+| Option                | Défaut | Rôle                                                 |
+| --------------------- | ------ | ---------------------------------------------------- |
+| Adresses IP           | vide   | les batteries que la découverte ne trouve pas        |
+| Intervalle de lecture | 30 s   | entre 10 et 300 s ; 30 s comme l'application Marstek |
+
+## Fonctionnement
+
+Les batteries ne savent répondre qu'à une requête à la fois : l'intégration
+envoie une seule requête à la fois, attend 2 secondes après chaque réponse,
+puis lit à chaque passage l'état (`ES.GetStatus`), le compteur CT
+(`EM.GetStatus`) et le mode (`ES.GetMode`) ; les entrées PV toutes les minutes,
+la température toutes les 5 minutes et le firmware toutes les 10 minutes. Une
+batterie est suivie par son adresse MAC Bluetooth : la découverte la retrouve si
+son adresse IP change.
+
+Le badge de transport de chaque batterie indique **local**, avec un point orange
+quand une requête est restée sans réponse ou que le firmware est fragile, et
+**injoignable** après trois passages sans réponse.
+
+## Limites connues
+
+- **La découverte ne trouve pas toutes les batteries.** Gladys diffuse la
+  demande depuis un port quelconque ; plusieurs firmwares ne répondent qu'au
+  port 30000 (Venus C, Venus E 2.0) et la Venus E mini ignore la diffusion :
+  saisissez leur adresse IP.
+- **Firmware antérieur à 150** (Venus E 3.0, A, D) : polling ménagé (une seule
+  tentative par requête, pas de lecture de la température), car ces firmwares
+  peuvent couper leur Open API ou perdre leurs réglages quand ils sont
+  interrogés. Mettez la batterie à jour depuis l'application Marstek.
+- **Venus C et Venus E 2.0** : leur compteur partage le canal Wi-Fi de l'Open
+  API ; le polling peut faire perdre le compteur CT et arrêter
+  l'autoconsommation. Elles sont lues une fois par minute au plus.
+- **Venus E mini** (firmware 301) : elle répond en diffusion, ce qui n'atteint
+  pas le conteneur de l'intégration ; non prise en charge pour l'instant.
+- Le mode **Manuel** et ses créneaux horaires se règlent dans l'application.
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- **« Pas de réponse »** : l'Open API est désactivée (certains firmwares la
+  coupent d'eux-mêmes : réactivez-la dans l'application), le port n'est pas le
+  bon, ou la batterie est sur un autre réseau que Gladys.
+- **Valeurs absentes** : certains firmwares ne remplissent pas tous les champs
+  (énergie solaire à 0, énergie hors réseau toujours à 0) ; l'intégration
+  n'affiche que ce que la batterie donne.
+- **« the battery refused the mode »** : le firmware n'accepte pas ce mode
+  (Secours avant le firmware 150).
+
+## Confidentialité
+
+Tout reste sur votre réseau : l'intégration ne parle qu'à vos batteries, en
+UDP. L'Open API de Marstek n'a pas de mot de passe : n'importe quel appareil de
+votre réseau peut la lire et la piloter.
+
+## Avertissement
+
+Intégration non officielle, sans lien avec Marstek. Marstek et Venus sont des
+marques de leurs propriétaires. Changer le mode ou la puissance de charge agit
+sur une vraie installation électrique : faites-le en connaissance de cause.
