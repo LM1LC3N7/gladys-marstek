@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-16
+
 ### Added
 
 - Marstek home batteries (Venus E 3.0, Venus A, Venus D, Venus C, Venus E 2.0)
@@ -33,3 +35,6 @@ the notes of the version's GitHub Release.
 - Transport badges (local, degraded with the reason, unreachable) and a "Test
   the connection" button listing the batteries, their firmware and Wi-Fi
   signal.
+
+[Unreleased]: https://github.com/LM1LC3N7/gladys-marstek/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/LM1LC3N7/gladys-marstek/releases/tag/v0.1.1

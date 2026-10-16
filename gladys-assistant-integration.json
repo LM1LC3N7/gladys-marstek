@@ -6,8 +6,8 @@
     "en": "Marstek Venus batteries over their local Open API: charge, powers, energy and mode.",
     "fr": "Batteries Marstek Venus via leur Open API locale : charge, puissances, énergie et mode."
   },
-  "version": "0.1.0",
-  "docker_image": "ghcr.io/lm1lc3n7/gladys-marstek:0.1.0",
+  "version": "0.1.1",
+  "docker_image": "ghcr.io/lm1lc3n7/gladys-marstek:0.1.1",
   "gladys_version": ">=5.0.0",
   "cover_image": "https://raw.githubusercontent.com/LM1LC3N7/gladys-marstek/main/cover.png",
   "categories": ["energy"],
