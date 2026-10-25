@@ -32,7 +32,7 @@ function featureOf(f, battery, ids) {
     // the whole publication with it); English, like every name of this module.
     feature.supported_options = modesFor(battery.profile).map((m, i) => ({
       value: m.value,
-      label: typeof m.label === 'string' ? m.label : m.label.en,
+      label: m.label,
       sort_order: i + 1,
     }));
   }

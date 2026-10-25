@@ -10,6 +10,13 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+### Changed
+
+- The operating-mode labels are plain English strings in the catalog itself
+  (the `value`s are unchanged), and the test checks the core's rules on
+  `supported_options` (non-blank labels, no duplicate value, integer order),
+  with the core's own validator when a Gladys clone is at hand.
+
 ## [0.1.2] - 2026-10-25
 
 ### Fixed

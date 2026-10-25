@@ -32,26 +32,11 @@ import {
  * the integer some firmware answers instead of the name.
  */
 export const MODES = [
-  {
-    value: 'auto',
-    api: 'Auto',
-    code: 0,
-    label: { en: 'Self-consumption (Auto)', fr: 'Autoconsommation (Auto)' },
-  },
-  { value: 'ai', api: 'AI', code: 1, label: { en: 'AI optimisation', fr: 'Optimisation IA' } },
-  {
-    value: 'manual',
-    api: 'Manual',
-    code: 2,
-    label: { en: 'Manual (schedule of the app)', fr: "Manuel (programme de l'app)" },
-  },
-  {
-    value: 'passive',
-    api: 'Passive',
-    code: 3,
-    label: { en: 'Passive (fixed power)', fr: 'Passif (puissance fixe)' },
-  },
-  { value: 'ups', api: 'UPS', code: 4, label: { en: 'Backup (UPS)', fr: 'Secours (UPS)' } },
+  { value: 'auto', api: 'Auto', code: 0, label: 'Self-consumption (Auto)' },
+  { value: 'ai', api: 'AI', code: 1, label: 'AI optimisation' },
+  { value: 'manual', api: 'Manual', code: 2, label: 'Manual (schedule of the app)' },
+  { value: 'passive', api: 'Passive', code: 3, label: 'Passive (fixed power)' },
+  { value: 'ups', api: 'UPS', code: 4, label: 'Backup (UPS)' },
 ];
 
 /** The mode a battery answers ("Auto", "auto", 0, "0"...) -> its `value`. */

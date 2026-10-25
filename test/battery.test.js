@@ -1,10 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { Battery, identityOf, normalizeMac } from '../src/battery.js';
 import { EVERY } from '../src/constants.js';
 import { buildDevice, deviceNames, displayName } from '../src/devices.js';
 import { METHODS } from '../src/protocol.js';
 import { E3_MAC, VENUS_C, VENUS_E3 } from './fixtures/answers.js';
+
+// The core's own validator of supported_options, when a Gladys clone is at hand
+// (not on GitHub CI): the rules below are its schema, this is the proof.
+const CORE_NORMALIZE = '/home/claude/code/Gladys/server/utils/normalizeSupportedOptions.js';
+const normalizeSupportedOptions = existsSync(CORE_NORMALIZE)
+  ? createRequire(import.meta.url)(CORE_NORMALIZE).normalizeSupportedOptions
+  : undefined;
 
 const ids = (type, id) => ({
   device: `ext:test:${type}:${id}`,
@@ -134,12 +143,25 @@ test('the Gladys device: MAC external id, params, features, mode options, passiv
     byKey.mode.supported_options.map((o) => o.value),
     ['auto', 'ai', 'manual', 'passive', 'ups'],
   );
-  // The core refuses the whole publication unless every label is a plain string
-  // (forum topic 11402: "[0].label must be a string").
-  for (const option of byKey.mode.supported_options) {
+  // The core refuses the whole publication unless every option follows its schema
+  // (server/utils/normalizeSupportedOptions.js; forum topic 11402: "[0].label must
+  // be a string"): a non-blank string label, a non-blank string or integer value,
+  // no two values alike once in string form, an integer sort_order.
+  const options = byKey.mode.supported_options;
+  for (const option of options) {
     assert.equal(typeof option.label, 'string', `label of ${option.value}`);
-    assert.ok(option.label.length > 0);
-    assert.equal(typeof option.sort_order, 'number');
+    assert.ok(option.label.trim().length > 0, `blank label of ${option.value}`);
+    assert.ok(
+      (typeof option.value === 'string' && option.value.trim().length > 0) ||
+        Number.isInteger(option.value),
+      `value ${option.value}`,
+    );
+    assert.ok(Number.isInteger(option.sort_order), `sort_order of ${option.value}`);
+  }
+  assert.equal(new Set(options.map((o) => `${o.value}`)).size, options.length, 'duplicate value');
+  if (normalizeSupportedOptions) {
+    // A select feature: string values are allowed.
+    assert.deepEqual(normalizeSupportedOptions(options, { allowStringValues: true }), options);
   }
   assert.equal(byKey.mode.supported_options[0].label, 'Self-consumption (Auto)');
   assert.equal(byKey.passive_power.min, -2500);
