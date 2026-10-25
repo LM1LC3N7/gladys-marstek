@@ -134,10 +134,14 @@ test('the Gladys device: MAC external id, params, features, mode options, passiv
     byKey.mode.supported_options.map((o) => o.value),
     ['auto', 'ai', 'manual', 'passive', 'ups'],
   );
-  assert.deepEqual(byKey.mode.supported_options[0].label, {
-    en: 'Self-consumption (Auto)',
-    fr: 'Autoconsommation (Auto)',
-  });
+  // The core refuses the whole publication unless every label is a plain string
+  // (forum topic 11402: "[0].label must be a string").
+  for (const option of byKey.mode.supported_options) {
+    assert.equal(typeof option.label, 'string', `label of ${option.value}`);
+    assert.ok(option.label.length > 0);
+    assert.equal(typeof option.sort_order, 'number');
+  }
+  assert.equal(byKey.mode.supported_options[0].label, 'Self-consumption (Auto)');
   assert.equal(byKey.passive_power.min, -2500);
   assert.equal(byKey.passive_power.max, 2500);
   assert.equal(byKey.passive_power.read_only, false);

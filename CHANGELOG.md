@@ -10,6 +10,12 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+### Fixed
+
+- The battery never reached the Discovery tab: the labels of the operating-mode
+  options were multi-language objects, and Gladys refuses the whole publication
+  ("[0].label must be a string"). They are plain strings now (forum topic 11402).
+
 ### Changed
 
 - README: the store install note replaces the work-in-progress notice, and the
