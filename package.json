@@ -1,6 +1,6 @@
 {
   "name": "gladys-marstek",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "Gladys Assistant external integration for Marstek home batteries (Venus series), over their local Open API (UDP). Unofficial, not affiliated with Marstek.",
   "type": "module",
