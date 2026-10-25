@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-25
+
 ### Fixed
 
 - The battery never reached the Discovery tab: the labels of the operating-mode
@@ -47,5 +49,6 @@ the notes of the version's GitHub Release.
   the connection" button listing the batteries, their firmware and Wi-Fi
   signal.
 
-[Unreleased]: https://github.com/LM1LC3N7/gladys-marstek/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/LM1LC3N7/gladys-marstek/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/LM1LC3N7/gladys-marstek/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/LM1LC3N7/gladys-marstek/releases/tag/v0.1.1
